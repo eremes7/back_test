@@ -4,6 +4,10 @@ const mongoose = require('mongoose')
 const app = express()
 const cors = require('cors')
 const kappaleRouter = require('./controllers/kappaleet')
+const logger = require('./utils/logger')
+const usersRouter = require('./controllers/users')
+const loginRouter = require('./controllers/login')
+const middleware = require('./utils/middleware')
 
 mongoose.set('strictQuery', false)
 
@@ -20,33 +24,17 @@ mongoose.connect(config.MONGODB_URI)
 app.use(cors())
 app.use(express.json())
 
-
-
-console.log('prööt')
-
+app.use(middleware.errorHandler)
 
 app.use('/api/kappaleet', kappaleRouter)
-
-const Kappale = require('./models/kappale')
-
-const newKappale = new Kappale({
-	nimi: "pröötbiisi",
-	id: 101,
-	alkuperäinen: "pröörprööt",
-	sanat: "pröötsis, pröötsis, pröööööt",
-	kategoria: "Isänmaa"
-})
-const axios = require('axios')
-axios.post('http://localhost:3003/api/kappaleet', newKappale)
-  .then(response => {
-    console.log('Vastaus palvelimelta:', response.data);
-  })
-  .catch(error => {
-    console.error('Virhe POST-pyynnössä:', error);
-  });
+app.use('/api/login', loginRouter)
+app.use('/api/users', usersRouter)
 
 app.listen(config.PORT, () => {
-		console.log(`Serveri pyörii portissa: ${config.PORT}`)
-  })
+	console.log(`Serveri pyörii portissa: ${config.PORT}`)
+})
+
+app.use(middleware.unknownEndpoint)
+app.use(middleware.requestLogger)
 
 module.exports = app
